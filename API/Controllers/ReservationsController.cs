@@ -2,31 +2,34 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Domain;
-using Persistence;
+using Application.Reservations;
 
 namespace API.Controllers
 {
     public class ReservationsController : BaseApiController
     {
-        private readonly DataContext _context;
-
-        public ReservationsController(DataContext context)
-        {
-            _context = context;
-        }
-
         [HttpGet]
         public async Task<ActionResult<List<Reservation>>> GetReservations()
         {
-            return await _context.Reservations.ToListAsync();
+            return await Mediator.Send(new List.Query());
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Reservation>> GetReservation(Guid id)
         {
-            return await _context.Reservations.FindAsync(id);
+            return await Mediator.Send(new Details.Query{ Id = id});
+        }
+
+        [HttpPost("check")]
+        public async Task<ActionResult<bool>> CheckAvailability(Reservation reservation)
+        {
+            return await Mediator.Send(new CheckAvailability.Query
+            {
+                House = reservation.House,
+                StartDate = reservation.StartDate,
+                EndDate = reservation.EndDate
+            });
         }
     }
 }
